@@ -1,35 +1,42 @@
 part of query.compose;
 
-String composeCreateColumn(final CreateColumn col) {
-  final sb = new StringBuffer();
-  sb.write(col.name);
-
-  if (col is CreateInt) {
-    if (col.autoIncrement) {
-      sb.write(' SERIAL');
+String composeDataType(final DataType type) {
+  if (type == null) throw Exception("Data type cannot be null!");
+  if (type is Int) {
+    if (type.auto) {
+      return " SERIAL ";
     } else {
-      sb.write(' INT');
+      return " INT ";
     }
-  } else if (col is CreateBool) {
-    sb.write(' BOOLEAN');
-  } else if (col is CreateDateTime) {
-    sb.write(' TIMESTAMP');
-  } else if (col is CreateStr) {
-    sb.write(' VARCHAR(');
-    sb.write(col.length);
-    sb.write(')');
+  } else if (type is Bool) {
+    return " BOOLEAN ";
+  } else if (type is DateTime) {
+    return " TIMESTAMP ";
+  } else if (type is Str) {
+    if (type.length == null) return " TEXT ";
+    return " VARCHAR(${type.length}) ";
+  } else if (type is Double) {
+    return " Double ";
   } else {
-    throw new Exception('Unknown columns to create ${col.runtimeType}!');
+    throw Exception("Unknown data type ${type.runtimeType}");
   }
+}
 
-  if (!col.isNullable) sb.write(' NOT NULL');
+String composeProperty(final Property col) {
+  final sb = StringBuffer();
+
+  sb.write(col.name);
+  sb.write(' ');
+  sb.write(composeDataType(col.type));
+
+  if (col.notNull) sb.write(' NOT NULL');
 
   return sb.toString();
 }
 
 String composeCreate(final Create create) {
-  final ImmutableCreateStatement info = create.asImmutable;
-  final sb = new StringBuffer();
+  final ImCreate info = create.asImmutable;
+  final sb = StringBuffer();
 
   sb.write('CREATE TABLE');
 
@@ -37,34 +44,57 @@ String composeCreate(final Create create) {
 
   sb.write(' ${info.name} (');
 
-  sb.write(info.columns.values.map(composeCreateColumn).join(', '));
+  // Write col specs
+      {
+    final cols = <String>[];
 
-  final List<CreateColumn> primaries =
-      info.columns.values.where((CreateColumn col) => col.isPrimary).toList();
+    for (CreateCol col in info.columns.values) {
+      final colSpec = StringBuffer();
+      colSpec.write(composeProperty(col));
+
+      // TODO handle other constraints
+
+      Check check =
+      col.constraints.firstWhere((c) => c is Check, orElse: () => null);
+      if (check != null) {
+        colSpec.write(' CHECK( ${composeExpression(check.expression)} )');
+      }
+
+      cols.add(colSpec.toString());
+    }
+
+    sb.write(cols.join(','));
+  }
+
+  final List<CreateCol> primaries =
+  info.columns.values.where((CreateCol col) => col.isPrimary).toList();
   if (primaries.length != 0) {
     sb.write(', PRIMARY KEY (');
-    sb.write(primaries.map((CreateColumn col) => col.name).join(','));
+    sb.write(primaries.map((CreateCol col) => col.name).join(','));
     sb.write(')');
   }
 
   {
-    final uniques = <CreateColumn>[];
-    final compositeUniques = <String, List<CreateColumn>>{};
+    final uniques = <CreateCol>[];
+    final compositeUniques = <String, List<CreateCol>>{};
     final foreigns = <String, Map<String, String>>{};
-    for (CreateColumn col in info.columns.values) {
-      if (col.foreignKey != null) {
-        if (!foreigns.containsKey(col.foreignKey.table)) {
-          foreigns[col.foreignKey.table] = <String, String>{};
+    for (CreateCol col in info.columns.values) {
+      if (col.foreign != null) {
+        if (!foreigns.containsKey(col.foreign.table)) {
+          foreigns[col.foreign.table] = <String, String>{};
         }
-        foreigns[col.foreignKey.table][col.name] = col.foreignKey.col;
+        foreigns[col.foreign.table][col.name] = col.foreign.col;
       }
 
-      if (col.uniqueGroup != null) {
-        if (col.uniqueGroup.isEmpty) {
+      final Unique uniqueSpec = col.constraints
+          .firstWhere((c) => c is Unique, orElse: () => null) as Unique;
+      if (uniqueSpec != null) {
+        if (uniqueSpec.group == null) {
           uniques.add(col);
         } else {
-          compositeUniques[col.uniqueGroup] =
-              (compositeUniques[col.uniqueGroup] ?? <CreateColumn>[])..add(col);
+          compositeUniques[uniqueSpec.group] =
+          (compositeUniques[uniqueSpec.group] ?? <CreateCol>[])
+            ..add(col);
         }
       }
     }
@@ -79,14 +109,13 @@ String composeCreate(final Create create) {
       sb.write(')');
     }
 
-    for (CreateColumn col in uniques) {
+    for (CreateCol col in uniques) {
       sb.write(', UNIQUE(${col.name})');
     }
 
     for (String group in compositeUniques.keys) {
-      final String str = compositeUniques[group]
-          .map((CreateColumn col) => col.name)
-          .join(', ');
+      final String str =
+      compositeUniques[group].map((CreateCol col) => col.name).join(', ');
       sb.write(', UNIQUE($str)');
     }
   }

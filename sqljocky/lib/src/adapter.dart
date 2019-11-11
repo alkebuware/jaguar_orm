@@ -51,9 +51,10 @@ class MysqlAdapter implements Adapter<sj.MySqlConnection> {
   sj.MySqlConnection get connection => _connection;
 
   /// Finds one record in the table
-  Future<Map> findOne(Find st) async {
+  Future<Map> findOne(Find st, {Connection withConn}) async {
     String stStr = composeFind(st);
-    sj.Results results = await _connection.execute(stStr);
+    sj.MySqlConnection conn = withConn ?? _connection;
+    sj.Results results = await (await conn.execute(stStr)).deStream();
 
     if (results.isEmpty) return null;
 
@@ -67,67 +68,77 @@ class MysqlAdapter implements Adapter<sj.MySqlConnection> {
   }
 
   // Finds many records in the table
-  Future<List<Map>> find(Find st) async {
+  Future<List<Map>> find(Find st, {Connection withConn}) async {
     String stStr = composeFind(st);
-    sj.Results results = await _connection.execute(stStr);
+    sj.MySqlConnection conn = withConn ?? _connection;
+    sj.Results results = await (await conn.execute(stStr)).deStream();
 
     return results.map((v) => v.first.first).toList();
   }
 
   /// Inserts a record into the table
-  Future<T> insert<T>(Insert st) async {
+  Future<T> insert<T>(Insert st, {Connection withConn}) async {
     String strSt = composeInsert(st);
-    sj.Results ret = await _connection.execute(strSt);
+    sj.MySqlConnection conn = withConn ?? _connection;
+    sj.Results ret = await (await conn.execute(strSt)).deStream();
     if (ret.isEmpty || ret.first.isEmpty) return null;
     return ret.first.first;
   }
 
   @override
-  Future<void> insertMany<T>(InsertMany statement) {
+  Future<void> insertMany<T>(InsertMany statement, {Connection withConn}) {
     throw UnimplementedError('InsertMany is not implemented yet!');
   }
 
   /// Executes the insert or update statement and returns the primary key of
   /// inserted row
-  Future<T> upsert<T>(Upsert statement) {
+  Future<T> upsert<T>(Upsert statement, {Connection withConn}) {
     throw UnimplementedError();
   }
 
   /// Executes bulk insert or update statement
-  Future<void> upsertMany<T>(UpsertMany statement) {
+  Future<void> upsertMany<T>(UpsertMany statement, {Connection withConn}) {
     throw UnimplementedError();
   }
 
   /// Updates a record in the table
-  Future<int> update(Update st) async {
-    sj.Results results = await _connection.execute(composeUpdate(st));
+  Future<int> update(Update st, {Connection withConn}) async {
+    sj.MySqlConnection conn = withConn ?? _connection;
+    sj.Results results = await (await conn.execute(composeUpdate(st)))
+        .deStream();
     return results.affectedRows;
   }
 
   /// Deletes a record from the table
-  Future<int> remove(Remove st) async {
-    sj.Results results = await _connection.execute(composeRemove(st));
+  Future<int> remove(Remove st, {Connection withConn}) async {
+    sj.MySqlConnection conn = withConn ?? _connection;
+    sj.Results results = await (await conn.execute(composeRemove(st)))
+        .deStream();
     return results.affectedRows;
   }
 
   /// Creates the table
-  Future<void> createTable(Create statement) async {
-    await _connection.execute(composeCreate(statement));
+  Future<void> createTable(Create statement, {Connection withConn}) async {
+    sj.MySqlConnection conn = withConn ?? _connection;
+    await conn.execute(composeCreate(statement));
   }
 
   /// Create the database
-  Future<void> createDatabase(CreateDb st) async {
-    await _connection.execute(composeCreateDb(st));
+  Future<void> createDatabase(CreateDb st, {Connection withConn}) async {
+    sj.MySqlConnection conn = withConn ?? _connection;
+    await conn.execute(composeCreateDb(st));
   }
 
   /// Drops tables from database
-  Future<void> dropTable(Drop st) async {
+  Future<void> dropTable(Drop st, {Connection withConn}) async {
     String stStr = composeDrop(st);
-    await _connection.execute(stStr);
+    sj.MySqlConnection conn = withConn ?? _connection;
+    await conn.execute(stStr);
   }
 
-  Future<void> dropDb(DropDb st) async {
-    await _connection.execute(composeDropDb(st));
+  Future<void> dropDb(DropDb st, {Connection withConn}) async {
+    sj.MySqlConnection conn = withConn ?? _connection;
+    await conn.execute(composeDropDb(st));
   }
 
   @override
@@ -154,7 +165,49 @@ class MysqlAdapter implements Adapter<sj.MySqlConnection> {
   }
 
   @override
-  Future<void> updateMany(UpdateMany statement) {
+  Future<void> updateMany(UpdateMany statement, {Connection withConn}) {
+    throw UnimplementedError('TODO need to be implemented');
+  }
+
+  @override
+  Future<void> alter(Alter statement, {Connection withConn}) {
+    throw UnimplementedError('TODO need to be implemented');
+  }
+
+  @override
+  Future<Connection> beginTx({Connection withConn}) {
+    throw UnimplementedError('TODO need to be implemented');
+  }
+
+  @override
+  Future exec(String sql, {Connection withConn}) {
+    throw UnimplementedError('TODO need to be implemented');
+  }
+
+  @override
+  get logger =>
+      throw UnimplementedError('TODO need to be implemented');
+
+  @override
+  Future<Connection> open() {
+    throw UnimplementedError('TODO need to be implemented');
+  }
+
+  @override
+  Future query(String sql, {Connection withConn}) {
+    throw UnimplementedError('TODO need to be implemented');
+  }
+
+  @override
+  Future<T> run<T>(Future<T> Function(Connection<sj.MySqlConnection> conn) task,
+      {Connection<sj.MySqlConnection> withConn}) {
+    throw UnimplementedError('TODO need to be implemented');
+  }
+
+  @override
+  Future<T> transaction<T>(
+      Future<T> Function(Connection<sj.MySqlConnection> conn) tx,
+      {Connection<sj.MySqlConnection> withConn}) {
     throw UnimplementedError('TODO need to be implemented');
   }
 }

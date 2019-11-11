@@ -2,6 +2,7 @@
 // is governed by a BSD-style license that can be found in the LICENSE file.
 
 import 'dart:async';
+
 import 'package:jaguar_query_sqljocky/jaguar_query_sqljocky.dart';
 
 /// The adapter
@@ -39,9 +40,9 @@ class PostBean {
 
   Future<Null> createTable() async {
     final st = Create(tableName, ifNotExists: true)
-        .addInt('_id', primary: true)
-        .addStr('msg', isNullable: true)
-        .addStr('author', isNullable: true);
+        .addInt('_id', isPrimary: true)
+        .addStr('msg', notNull: true)
+        .addStr('author', notNull: true);
     await _adapter.createTable(st);
   }
 

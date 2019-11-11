@@ -11,7 +11,11 @@ environment:
   sdk: '>=2.0.0 <3.0.0'
 
 dependencies:
-  jaguar_query: ^2.2.4
+  jaguar_query:
+    git:
+      url: https://github.com/Jaguar-dart/jaguar_orm.git
+      ref: 2dc3d243b64bfd497758f18a99bbb651f0528e65
+      path: query
   sqljocky5: ^2.2.0
   path: ^1.6.2
 
