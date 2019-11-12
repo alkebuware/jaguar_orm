@@ -85,7 +85,7 @@ Tuple3<String, String, bool> _makeDataType(FieldElement f) {
     final dartType = toDartType(f.type);
     if (dartType == null) throw Exception("Unknown type!");
     final ret = _defaultDataTypeDef[dartType];
-    if (ret == null) throw Exception("Unknownd type!");
+    if (ret == null) throw Exception("Unknown type!");
     return Tuple3(_defaultDataType[dartType], ret, false);
   }
 

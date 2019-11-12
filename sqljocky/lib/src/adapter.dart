@@ -54,17 +54,15 @@ class MysqlAdapter implements Adapter<sj.MySqlConnection> {
   Future<Map> findOne(Find st, {Connection withConn}) async {
     String stStr = composeFind(st);
     sj.MySqlConnection conn = withConn ?? _connection;
-    sj.Results results = await (await conn.execute(stStr)).deStream();
+    Stream<sj.Row> stream = await conn.execute(stStr);
 
-    if (results.isEmpty) return null;
-
-    List resList = results.toList();
-    Map map = {};
-    for (int i = 0; i < resList[0].length; i++) {
-      Object value = resList[0][i];
-      map[results.fields[i].name] = value;
+    sj.Row rowFound;
+    await for (sj.Row row in stream) {
+      rowFound = row;
+      break;
     }
-    return map;
+
+    return rowFound?.asMap();
   }
 
   // Finds many records in the table
