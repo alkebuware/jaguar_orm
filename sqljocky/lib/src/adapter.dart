@@ -54,15 +54,16 @@ class MysqlAdapter implements Adapter<sj.MySqlConnection> {
   Future<Map> findOne(Find st, {Connection withConn}) async {
     String stStr = composeFind(st);
     sj.MySqlConnection conn = withConn ?? _connection;
-    Stream<sj.Row> stream = await conn.execute(stStr);
+    sj.StreamedResults results = await conn.execute(stStr);
 
     sj.Row rowFound;
-    await for (sj.Row row in stream) {
+    await for (sj.Row row in results) {
       rowFound = row;
       break;
     }
 
-    return rowFound?.asMap();
+    return rowFound?.asMap()?.map((index, value) =>
+        MapEntry<String, dynamic>(results.fields[index].name, value));
   }
 
   // Finds many records in the table
@@ -70,17 +71,26 @@ class MysqlAdapter implements Adapter<sj.MySqlConnection> {
     String stStr = composeFind(st);
     sj.MySqlConnection conn = withConn ?? _connection;
     sj.Results results = await (await conn.execute(stStr)).deStream();
-
-    return results.map((v) => v.first.first).toList();
+    return results.map((sj.Row r) =>
+        r.asMap().map((index, value) =>
+            MapEntry<String, dynamic>(results.fields[index].name, value)))
+        .toList();
   }
 
   /// Inserts a record into the table
   Future<T> insert<T>(Insert st, {Connection withConn}) async {
     String strSt = composeInsert(st);
     sj.MySqlConnection conn = withConn ?? _connection;
-    sj.Results ret = await (await conn.execute(strSt)).deStream();
-    if (ret.isEmpty || ret.first.isEmpty) return null;
-    return ret.first.first;
+    await conn.execute(strSt);
+    Stream<sj.Row> stream = await conn.execute(composeLastInsertId());
+
+    int id;
+    await for (sj.Row row in stream) {
+      id = row.first;
+      break;
+    }
+
+    return id as dynamic;
   }
 
   @override
@@ -102,16 +112,16 @@ class MysqlAdapter implements Adapter<sj.MySqlConnection> {
   /// Updates a record in the table
   Future<int> update(Update st, {Connection withConn}) async {
     sj.MySqlConnection conn = withConn ?? _connection;
-    sj.Results results = await (await conn.execute(composeUpdate(st)))
-        .deStream();
+    sj.Results results =
+    await (await conn.execute(composeUpdate(st))).deStream();
     return results.affectedRows;
   }
 
   /// Deletes a record from the table
   Future<int> remove(Remove st, {Connection withConn}) async {
     sj.MySqlConnection conn = withConn ?? _connection;
-    sj.Results results = await (await conn.execute(composeRemove(st)))
-        .deStream();
+    sj.Results results =
+    await (await conn.execute(composeRemove(st))).deStream();
     return results.affectedRows;
   }
 
@@ -142,7 +152,7 @@ class MysqlAdapter implements Adapter<sj.MySqlConnection> {
   @override
   T parseValue<T>(dynamic v) {
     if (T == String) {
-      return v;
+      return v?.toString() as T;
     } else if (T == int) {
       return v?.toInt();
     } else if (T == double) {
@@ -183,8 +193,7 @@ class MysqlAdapter implements Adapter<sj.MySqlConnection> {
   }
 
   @override
-  get logger =>
-      throw UnimplementedError('TODO need to be implemented');
+  get logger => throw UnimplementedError('TODO need to be implemented');
 
   @override
   Future<Connection> open() {

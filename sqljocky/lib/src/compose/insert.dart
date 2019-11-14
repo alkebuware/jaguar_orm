@@ -21,3 +21,5 @@ String composeInsert(final Insert st) {
 
   return sb.toString();
 }
+
+String composeLastInsertId() => "SELECT LAST_INSERT_ID()";
