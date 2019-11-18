@@ -211,7 +211,7 @@ class Writer {
       _w.writeln(
           '.setMany(toSetColumns(model, only: only, onlyNonNull: onlyNonNull));');
       _w.writeln('int id = await adapter.insert(insert, withConn: withConn);');
-      _w.writeln('return find(id)');
+      _w.writeln('return find(id);');
       _w.writeln('}');
       return;
     }
