@@ -6,17 +6,21 @@ String composeDataType(final DataType type) {
     if (type.auto) {
       return " SERIAL ";
     } else {
-      return " INT ";
+      return " ${type.big == true ? "BIG" : ""}INT ${type.unsigned == true
+          ? "UNSIGNED "
+          : ""}";
     }
   } else if (type is Bool) {
     return " BOOLEAN ";
-  } else if (type is DateTime) {
+  } else if (type is DateTime || type is Timestamp) {
     return " TIMESTAMP ";
   } else if (type is Str) {
     if (type.length == null) return " TEXT ";
     return " VARCHAR(${type.length}) ";
   } else if (type is Double) {
     return " Double ";
+  } else if (type is Json) {
+    return " JSON ";
   } else {
     throw Exception("Unknown data type ${type.runtimeType}");
   }
@@ -34,25 +38,16 @@ String composeProperty(final Property col) {
   return sb.toString();
 }
 
-String composeCreate(final Create create) {
-  final ImCreate info = create.asImmutable;
-  final sb = StringBuffer();
-
-  sb.write('CREATE TABLE');
-
-  if (info.ifNotExists) sb.write(' IF NOT EXISTS');
-
-  sb.write(' ${info.name} (');
-
-  // Write col specs
-      {
+String composeColumnDefinitions(Iterable<CreateCol> columns,
+    {String clausePrefix = ""}) {
+  StringBuffer sb = StringBuffer();
+  {
     final cols = <String>[];
 
-    for (CreateCol col in info.columns.values) {
+    for (CreateCol col in columns) {
       final colSpec = StringBuffer();
+      colSpec.write("$clausePrefix");
       colSpec.write(composeProperty(col));
-
-      // TODO handle other constraints
 
       Check check =
       col.constraints.firstWhere((c) => c is Check, orElse: () => null);
@@ -67,7 +62,7 @@ String composeCreate(final Create create) {
   }
 
   final List<CreateCol> primaries =
-  info.columns.values.where((CreateCol col) => col.isPrimary).toList();
+  columns.where((CreateCol col) => col.isPrimary).toList();
   if (primaries.length != 0) {
     sb.write(', PRIMARY KEY (');
     sb.write(primaries.map((CreateCol col) => col.name).join(','));
@@ -78,7 +73,7 @@ String composeCreate(final Create create) {
     final uniques = <CreateCol>[];
     final compositeUniques = <String, List<CreateCol>>{};
     final foreigns = <String, Map<String, String>>{};
-    for (CreateCol col in info.columns.values) {
+    for (CreateCol col in columns) {
       if (col.foreign != null) {
         if (!foreigns.containsKey(col.foreign.table)) {
           foreigns[col.foreign.table] = <String, String>{};
@@ -101,7 +96,7 @@ String composeCreate(final Create create) {
 
     for (final String foreignTab in foreigns.keys) {
       final Map<String, String> cols = foreigns[foreignTab];
-      sb.write(', FOREIGN KEY (');
+      sb.write(',${clausePrefix} FOREIGN KEY (');
       sb.write(cols.keys.join(', '));
       sb.write(') REFERENCES ');
       sb.write(foreignTab + '(');
@@ -119,6 +114,22 @@ String composeCreate(final Create create) {
       sb.write(', UNIQUE($str)');
     }
   }
+
+  return sb.toString();
+}
+
+String composeCreate(final Create create) {
+  final ImCreate info = create.asImmutable;
+  final sb = StringBuffer();
+
+  sb.write('CREATE TABLE');
+
+  if (info.ifNotExists) sb.write(' IF NOT EXISTS');
+
+  sb.write(' ${info.name} (');
+
+  // Write col specs
+  sb.write(composeColumnDefinitions(info.columns.values));
 
   sb.write(')');
 

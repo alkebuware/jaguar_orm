@@ -30,7 +30,7 @@ String composeAliasedRowSource(AliasedRowSource source) {
 
 String composeRow(Row row) {
   final sb = StringBuffer('(');
-  sb.write(row.columns.map(composeExpression).join(','));
+  sb.write(row.items.map(composeExpression).join(','));
   sb.write(')');
   return sb.toString();
 }

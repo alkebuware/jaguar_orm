@@ -11,32 +11,48 @@ Map<Type, DataType> sqlTypeMap = const {
   DateTime: Timestamp(),
   String: Str(),
   Duration: Interval(),
+  List: Json(),
+  Map: Json(),
 };
 
 /// Integer datatype.
 class Int implements DataType<int> {
   final bool auto;
+  final bool unsigned;
+  final bool big;
 
-  const Int({this.auto = false});
+  const Int({this.auto = false, this.unsigned = false, this.big = false});
 }
+
+class Json implements DataType {
+  @override
+  bool get auto => false;
+
+  const Json();
+}
+
+const foreignKey = Int(big: true, unsigned: true);
 
 const auto = Int(auto: true);
 
 /// Integer datatype.
 class Double implements DataType<double> {
   bool get auto => false;
+
   const Double();
 }
 
 /// Integer datatype.
 class Bool implements DataType<bool> {
   bool get auto => false;
+
   const Bool();
 }
 
 /// Integer datatype.
 class Timestamp implements DataType<DateTime> {
   bool get auto => false;
+
   const Timestamp();
 }
 
@@ -51,6 +67,7 @@ class Str implements DataType<String> {
 
 class Interval implements DataType<Duration> {
   bool get auto => false;
+
   const Interval();
 }
 

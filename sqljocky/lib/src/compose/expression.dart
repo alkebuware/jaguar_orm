@@ -10,7 +10,7 @@ String composeExpression(final Expression exp) {
   }
 
   if (exp is I) return exp.name;
-  if (exp is Literal) return composeLiteral(exp);
+  if (exp is L) return composeLiteral(exp);
   if (exp is Func) return composeFunc(exp);
   if (exp is E) return exp.expr;
   if (exp is Not) return 'NOT ${composeExpression(exp.expr)}';
@@ -49,13 +49,23 @@ String composeExpression(final Expression exp) {
         exp.low)} AND ${composeExpression(exp.high)})';
   }
 
+  if (exp is Row) {
+    StringBuffer sb = StringBuffer();
+    sb.write("'[");
+    sb.write(exp.items.map(composeExpression)
+        .map((String s) =>
+        s.replaceRange(0, 1, "\"").replaceRange(s.length - 1, s.length, "\""))
+        .join(","));
+    sb.write("]'");
+    return sb.toString();
+  }
+
   throw Exception('Unknown expression ${exp.runtimeType}!');
 }
 
-
 String composeField(final Field field) => field.name;
 
-String composeLiteral(Literal literal) {
+String composeLiteral(L literal) {
   if (literal is ToDialect) {
     final val = (literal as ToDialect).toDialect(mysqlDialect, composer);
     if (val is String) return val;
@@ -70,9 +80,10 @@ String composeLiteral(Literal literal) {
 
   if (val is num) return "$val";
   if (val is String) return "'${sqlStringEscape(val)}'";
-  if (val is DateTime) return "$val"; //TODO
+  if (val is DateTime) return "'$val'";
   if (val is bool) return val ? 'TRUE' : 'FALSE';
   if (val is Duration) return "$val"; //TODO
+  if (val is Map || val is List) return jsonEncode(val);
 
   throw Exception("Invalid type ${val.runtimeType}!");
 }

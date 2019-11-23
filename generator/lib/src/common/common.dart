@@ -1,11 +1,10 @@
-import 'package:source_gen/source_gen.dart';
-import 'package:analyzer/dart/element/type.dart';
-import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/constant/value.dart';
-
-import 'package:jaguar_query/jaguar_query.dart';
+import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:jaguar_orm/jaguar_orm.dart';
 import 'package:jaguar_orm/src/annotations/column.dart';
+import 'package:jaguar_query/jaguar_query.dart';
+import 'package:source_gen/source_gen.dart';
 
 final isGenBean = TypeChecker.fromRuntime(GenBean);
 
@@ -104,6 +103,8 @@ Type toDartType(DartType type) {
   if (isBool.isExactlyType(type)) return bool;
   if (isDateTime.isExactlyType(type)) return DateTime;
   if (isDuration.isExactlyType(type)) return Duration;
+  if (isMap.isExactlyType(type)) return Map;
+  if (isList.isExactlyType(type)) return List;
 
   return null;
 }

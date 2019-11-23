@@ -108,7 +108,11 @@ class Writer {
         'Future<void> createTable({bool ifNotExists = false, Connection withConn}) async {');
     _writeln('final st = Sql.create(tableName, ifNotExists: ifNotExists);');
     for (final ParsedField f in _b.fields.values) {
-      _write('st.addByType(${f.field}.name, ${f.dataTypeDecl},');
+      bool isForeignKey = f.foreign != null;
+      _write(
+          'st.addByType(${f.field}.name, ${isForeignKey
+              ? "Int(big: true, unsigned: true)"
+              : f.dataTypeDecl},');
       if (f.column.isPrimary) _write('isPrimary: true,');
       if (f.column.notNull) _write('notNull: ${f.column.notNull},');
       if (f.foreign != null) {

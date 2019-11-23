@@ -132,6 +132,18 @@ class DateTimeField extends Field<DateTime> {
   }
 }
 
+/// JsonField is a convenience DSL used to construct queries in a concise and
+/// understandable way.
+class JsonField extends Field< /*List|Map*/ dynamic> {
+  JsonField(String name) : super(name);
+
+  void create(Create statement,
+      {bool notNull = false, List<Constraint> constraints = const []}) {
+    statement.addByType(name, Json(),
+        notNull: notNull, constraints: constraints);
+  }
+}
+
 /// BoolField is a convenience DSL used to construct queries in a concise and
 /// understandable way.
 class BoolField extends Field<bool> {

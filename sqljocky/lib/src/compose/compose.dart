@@ -1,15 +1,15 @@
 library query.compose;
 
-import 'package:jaguar_query/jaguar_query.dart';
+import 'dart:convert';
 
+import '../../jaguar_query_sqljocky.dart';
+
+part 'alter.dart';
 part 'create.dart';
 part 'delete.dart';
 part 'expression.dart';
-
 part 'find.dart';
-
 part 'insert.dart';
-
 part 'row_source.dart';
 part 'update.dart';
 

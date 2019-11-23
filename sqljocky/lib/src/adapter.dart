@@ -4,10 +4,12 @@
 library jaguar_orm_sqljocky.src;
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:jaguar_query/jaguar_query.dart';
 import 'package:jaguar_query_sqljocky/composer.dart';
 import 'package:sqljocky5/sqljocky.dart' as sj;
+import 'package:type_helper/type_helper.dart';
 
 class MysqlAdapter implements Adapter<sj.MySqlConnection> {
   sj.MySqlConnection _connection;
@@ -46,7 +48,10 @@ class MysqlAdapter implements Adapter<sj.MySqlConnection> {
   }
 
   /// Closes all connections to the database.
-  Future<void> close() => _connection.close();
+  Future<void> close() async {
+    await _connection.close();
+    _connection = null;
+  }
 
   sj.MySqlConnection get connection => _connection;
 
@@ -71,7 +76,8 @@ class MysqlAdapter implements Adapter<sj.MySqlConnection> {
     String stStr = composeFind(st);
     sj.MySqlConnection conn = withConn ?? _connection;
     sj.Results results = await (await conn.execute(stStr)).deStream();
-    return results.map((sj.Row r) =>
+    return results
+        .map((sj.Row r) =>
         r.asMap().map((index, value) =>
             MapEntry<String, dynamic>(results.fields[index].name, value)))
         .toList();
@@ -163,14 +169,42 @@ class MysqlAdapter implements Adapter<sj.MySqlConnection> {
       if (v == null) return null;
       if (v is String) return DateTime.parse(v) as T;
       if (v == int) return DateTime.fromMillisecondsSinceEpoch(v * 1000) as T;
+      if (v is DateTime) return v as T;
       return null;
     } else if (T == bool) {
       if (v == null) return null;
       return (v == 0 ? false : true) as T;
+    } else if (isTypeOf<T, Map>() || isTypeOf<T, List>()) {
+      if (v == null) return null;
+      if (isTypeOf<T, Map>()) {
+        T map = jsonDecode(v);
+        return map;
+      } else if (isTypeOf<T, List>()) {
+        List l;
+        if (isTypeOf<T, List<Map<String, dynamic>>>()) {
+          l = List<Map<String, dynamic>>();
+        } else if (isTypeOf<T, List<String>>()) {
+          l = List<String>();
+        } else {
+          l = List();
+        }
+        List raw = jsonDecode(v);
+        raw.forEach(l.add);
+        return l as T;
+      } else {
+        [].cast();
+        return null;
+      }
     } else {
       throw new Exception("Invalid type $T!");
     }
   }
+
+  Type typeOfElementsInList<T>(List<T> e) => T;
+
+  Type typeOfKeyInMap<T>(Map<T, dynamic> k) => T;
+
+  Type typeOfValuesInMap<T>(Map<dynamic, T> v) => T;
 
   @override
   Future<void> updateMany(UpdateMany statement, {Connection withConn}) {
@@ -179,7 +213,8 @@ class MysqlAdapter implements Adapter<sj.MySqlConnection> {
 
   @override
   Future<void> alter(Alter statement, {Connection withConn}) {
-    throw UnimplementedError('TODO need to be implemented');
+    sj.MySqlConnection conn = withConn ?? _connection;
+    return conn.execute(composeAlter(statement));
   }
 
   @override

@@ -66,15 +66,19 @@ Map<Type, String> _defaultDataTypeDef = const {
   DateTime: "Timestamp()",
   String: "Str()",
   Duration: "Interval()",
+  List: "Json()",
+  Map: "Json()",
 };
 
 Map<Type, String> _defaultDataType = const {
   int: "Int",
   double: "Double",
   bool: "Bool",
-  DateTime: "Timestamp",
+  DateTime: "DateTime",
   String: "Str",
   Duration: "Interval",
+  List: "Json",
+  Map: "Json",
 };
 
 Tuple3<String, String, bool> _makeDataType(FieldElement f) {
