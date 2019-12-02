@@ -14,7 +14,8 @@ abstract class L<T> extends Expression {
     if (value is bool) return BoolL(value);
     if (value is DateTime) return TimestampL(value);
     if (value is Duration) return DurationL(value);
-    if(value is List) return Row.make(value);
+    if (value is List) return StrL(jsonEncode(value));
+    if (value is Map) return StrL(jsonEncode(value));
     if (value == null) return nil;
 
     return null;

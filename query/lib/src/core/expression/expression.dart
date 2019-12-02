@@ -1,6 +1,7 @@
 library jaguar.query.expression;
 
 import 'dart:collection';
+import 'dart:convert';
 import 'package:jaguar_query/jaguar_query.dart';
 
 part 'and.dart';
