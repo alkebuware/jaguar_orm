@@ -41,7 +41,7 @@ class AddColumn<T> implements AlterClause {
   }
 
   static AddColumn<String> string(String name,
-      {core.int length = 20,
+      {core.int length = null,
       core.bool notNull = false,
       core.bool primary = false,
       References foreign,

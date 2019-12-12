@@ -80,7 +80,12 @@ String composeLiteral(L literal) {
 
   if (val is num) return "$val";
   if (val is String) return "'${sqlStringEscape(val)}'";
-  if (val is DateTime) return "'$val'";
+  if (val is DateTime)
+    return "'${val.year.toString().padLeft(4, "0")}-${val.month.toString()
+        .padLeft(2, "0")}-${val.day.toString().padLeft(2, "0")} ${val.hour
+        .toString().padLeft(2, "0")}:${val.minute.toString().padLeft(
+        2, "0")}:${val.second.toString().padLeft(2, "0")}.${(val.millisecond *
+        1000 + val.microsecond).toString().padRight(6, "0")}'";
   if (val is bool) return val ? 'TRUE' : 'FALSE';
   if (val is Duration) return "$val"; //TODO
   if (val is Map || val is List) return jsonEncode(val);

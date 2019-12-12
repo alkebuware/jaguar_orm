@@ -105,7 +105,7 @@ String composeColumnDefinitions(Iterable<CreateCol> columns,
     }
 
     for (CreateCol col in uniques) {
-      sb.write(', UNIQUE(${col.name})');
+      sb.write(',$clausePrefix UNIQUE(${col.name})');
     }
 
     for (String group in compositeUniques.keys) {
