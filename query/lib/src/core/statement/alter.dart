@@ -11,13 +11,15 @@ class AddColumn<T> implements AlterClause {
 
   static AddColumn<core.int> int(String name,
       {core.bool notNull = false,
-      core.bool auto = false,
-      core.bool primary = false,
-      References foreign,
-      List<Constraint> constraints = const []}) {
+        core.bool auto = false,
+        core.bool primary = false,
+        core.bool unsigned = false,
+        core.bool big = false,
+        References foreign,
+        List<Constraint> constraints = const []}) {
     return AddColumn(CreateCol(
       name,
-      Int(auto: auto),
+      Int(auto: auto, unsigned: unsigned, big: big),
       notNull: notNull,
       isPrimary: primary,
       foreign: foreign,
@@ -27,9 +29,9 @@ class AddColumn<T> implements AlterClause {
 
   static AddColumn<core.double> double(String name,
       {core.bool notNull = false,
-      core.bool primary = false,
-      References foreign,
-      List<Constraint> constraints = const []}) {
+        core.bool primary = false,
+        References foreign,
+        List<Constraint> constraints = const []}) {
     return AddColumn(CreateCol(
       name,
       Double(),
@@ -42,10 +44,10 @@ class AddColumn<T> implements AlterClause {
 
   static AddColumn<String> string(String name,
       {core.int length = null,
-      core.bool notNull = false,
-      core.bool primary = false,
-      References foreign,
-      List<Constraint> constraints = const []}) {
+        core.bool notNull = false,
+        core.bool primary = false,
+        References foreign,
+        List<Constraint> constraints = const []}) {
     return AddColumn(CreateCol(
       name,
       Str(length: length),
@@ -68,9 +70,9 @@ class AddColumn<T> implements AlterClause {
 
   static AddColumn<DateTime> timestamp(String name,
       {core.bool notNull = false,
-      core.bool primary = false,
-      References foreign,
-      List<Constraint> constraints = const []}) {
+        core.bool primary = false,
+        References foreign,
+        List<Constraint> constraints = const []}) {
     return AddColumn(CreateCol(
       name,
       Timestamp(),
@@ -201,7 +203,8 @@ class Alter implements Statement {
       adds[cl.name] = cl;
     } else if (cl is DropColumn) {
       drops[cl.name] = cl;
-    } /* TODO  else if (cl is ModifyColumn) {
+    }
+    /* TODO  else if (cl is ModifyColumn) {
       mods[cl.name] = cl;
     } */
     else {

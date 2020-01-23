@@ -1,15 +1,14 @@
 library jaguar_orm.generator.parser;
 
-import 'package:jaguar_orm_gen/src/parser/parser.dart';
-import 'package:tuple/tuple.dart';
-import 'package:source_gen/source_gen.dart';
+import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:analyzer/dart/constant/value.dart';
-
+import 'package:jaguar_orm/jaguar_orm.dart' hide Field;
 import 'package:jaguar_orm_gen/src/common/common.dart';
 import 'package:jaguar_orm_gen/src/model/model.dart';
-import 'package:jaguar_orm/jaguar_orm.dart' hide Field;
+import 'package:jaguar_orm_gen/src/parser/parser.dart';
+import 'package:source_gen/source_gen.dart';
+import 'package:tuple/tuple.dart';
 
 import '../exceptions.dart';
 
@@ -86,7 +85,8 @@ class UnassociatedBeanParser {
 
     model = interface.typeArguments.first;
 
-    if (model.isDynamic) throw Exception("Model cannot be dynamic!");
+    if (model.isDynamic) throw Exception(
+        "Model ${model.element.displayName} cannot be dynamic!");
   }
 
   /// Parses and populates [fields]

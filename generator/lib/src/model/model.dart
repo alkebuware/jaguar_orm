@@ -1,11 +1,12 @@
 library jaguar_orm.generator.model;
 
-import 'package:jaguar_orm/jaguar_orm.dart';
-import 'package:meta/meta.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:jaguar_orm_gen/src/common/common.dart';
+import 'package:jaguar_orm/jaguar_orm.dart';
 import 'package:jaguar_orm/src/annotations/column.dart';
+import 'package:jaguar_orm_gen/src/common/common.dart';
+import 'package:meta/meta.dart';
 import 'package:tuple/tuple.dart';
+
 import 'preloads.dart';
 
 export 'preloads.dart';
@@ -32,6 +33,8 @@ class ParsedField {
 
   final List<String> constraints;
 
+  final bool isEnum;
+
   ParsedField(this.type, this.field,
       {@required Column column,
       @required this.dataType,
@@ -39,6 +42,7 @@ class ParsedField {
       @required this.foreign,
       @required this.isFinal,
       @required this.isAuto,
+        @required this.isEnum,
       this.constraints: const []})
       : column = column ?? Column();
 

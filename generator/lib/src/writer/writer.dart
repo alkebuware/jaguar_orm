@@ -93,8 +93,23 @@ class Writer {
 
     _b.fields.values.forEach((ParsedField field) {
       if (!field.isFinal) {
-        _w.writeln(
-            "model.${field.field} = adapter.parseValue(map['${_camToSnak(field.colName)}']);");
+        if (field.isEnum) {
+          _w.writeln("""
+            {
+              int enumIndex = adapter.parseValue(map["${_camToSnak(
+              field.colName)}"]);
+              if (enumIndex != null &&
+                  enumIndex > 0 &&
+                  enumIndex < ${field.type}.values.length) {
+                model.${field.field} = ${field.type}.values[enumIndex];
+              }
+            }
+          """);
+        } else {
+          _w.writeln(
+              "model.${field.field} = adapter.parseValue(map['${_camToSnak(
+                  field.colName)}']);");
+        }
       }
     });
 
@@ -109,10 +124,14 @@ class Writer {
     _writeln('final st = Sql.create(tableName, ifNotExists: ifNotExists);');
     for (final ParsedField f in _b.fields.values) {
       bool isForeignKey = f.foreign != null;
-      _write(
-          'st.addByType(${f.field}.name, ${isForeignKey
-              ? "Int(big: true, unsigned: true)"
-              : f.dataTypeDecl},');
+      if (f.isEnum == true) {
+        _write('st.addByType(${f.field}.name, Int(big: true, unsigned: true)');
+      } else {
+        _write(
+            'st.addByType(${f.field}.name, ${isForeignKey
+                ? "Int(big: true, unsigned: true)"
+                : f.dataTypeDecl},');
+      }
       if (f.column.isPrimary) _write('isPrimary: true,');
       if (f.column.notNull) _write('notNull: ${f.column.notNull},');
       if (f.foreign != null) {
@@ -155,7 +174,11 @@ class Writer {
       if (field.isAuto) {
         _w.writeln("if(!update && model.${field.field} != null) {");
       }
-      _w.writeln("ret.add(${field.field}.set(model.${field.field}));");
+      if (field.isEnum) {
+        _w.writeln("ret.add(${field.field}.set(model.${field.field}.index));");
+      } else {
+        _w.writeln("ret.add(${field.field}.set(model.${field.field}));");
+      }
       if (field.isAuto) {
         _w.writeln("}");
       }
@@ -167,8 +190,15 @@ class Writer {
       if (field.isAuto) {
         _w.writeln("if(model.${field.field} != null) {");
       }
-      _w.writeln(
-          "if(only.contains(${field.field}.name)) ret.add(${field.field}.set(model.${field.field}));");
+      if (field.isEnum) {
+        _w.writeln(
+            "if(only.contains(${field.field}.name)) ret.add(${field
+                .field}.set(model.${field.field}.index));");
+      } else {
+        _w.writeln(
+            "if(only.contains(${field.field}.name)) ret.add(${field
+                .field}.set(model.${field.field}));");
+      }
       if (field.isAuto) {
         _w.writeln("}");
       }
@@ -178,7 +208,11 @@ class Writer {
 
     _b.fields.values.forEach((ParsedField field) {
       _w.writeln("if(model.${field.field} != null) {");
-      _w.writeln("ret.add(${field.field}.set(model.${field.field}));");
+      if (field.isEnum) {
+        _w.writeln("ret.add(${field.field}.set(model.${field.field}.index));");
+      } else {
+        _w.writeln("ret.add(${field.field}.set(model.${field.field}));");
+      }
       _w.writeln("}");
     });
 

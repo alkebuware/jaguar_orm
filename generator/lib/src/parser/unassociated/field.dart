@@ -84,9 +84,9 @@ Map<Type, String> _defaultDataType = const {
 Tuple3<String, String, bool> _makeDataType(FieldElement f) {
   ElementAnnotation annot = firstAnnotationOf(f, isDataType);
 
-  // TODO proper error
   if (annot == null) {
-    final dartType = toDartType(f.type);
+    var dartType = toDartType(f.type);
+    if (dartType == null && f.isEnumConstant) dartType = int;
     if (dartType == null) throw Exception("Unknown type!");
     final ret = _defaultDataTypeDef[dartType];
     if (ret == null) throw Exception("Unknown type!");
@@ -112,11 +112,10 @@ ParsedField _parseField(FieldElement f) {
 
   final dataType = _makeDataType(f);
   Column column = metadata.firstWhere((c) => c is Column, orElse: () => null);
-
+//  (f.type as InterfaceType).element.isEnum;
   ForeignSpec foreign =
       metadata.firstWhere((c) => c is ForeignSpec, orElse: () => null);
   final constraints = _parseConstraints(f);
-
   return ParsedField(f.type.displayName, f.name,
       isAuto: dataType.item3,
       column: column,
@@ -124,5 +123,7 @@ ParsedField _parseField(FieldElement f) {
       dataTypeDecl: dataType.item2,
       foreign: foreign,
       isFinal: f.isFinal && f.getter.isSynthetic,
-      constraints: constraints);
+      constraints: constraints,
+      isEnum:
+      f.type is InterfaceType && (f.type as InterfaceType).element.isEnum);
 }
